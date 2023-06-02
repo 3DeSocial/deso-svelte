@@ -1,6 +1,6 @@
 <script>
 
-	import {identity,  configure, updateLikeStatus, getLikesForPost, getDiamondsForPost, getSinglePost, sendDiamonds } from 'deso-protocol';
+	import {identity,  configure, updateLikeStatus, getLikesForPost, getDiamondsForPost, getSinglePost, sendDiamonds, submitPost} from 'deso-protocol';
 	import { onMount } from 'svelte';	
 	import { writable } from 'svelte/store';
 
@@ -10,6 +10,7 @@
 	let testPost = 'aaebf5cdc74423356f53ce865ed88b0ee41bba8c9d496e86b9e32c3135fa140a';
 	let reply = '';
 	let responseMessage = null;
+	let testPostBody = '';
 	onMount ((count) => {
 		configure({
 			spendingLimitOptions: {
@@ -49,6 +50,24 @@
 		});
 	});
 
+	const sendPostHandler = async () =>{
+		// get param values
+		let senderPublicKeyBase58Check = publicKey;	
+		let postBody = testPostBody;
+
+		const params = {
+			UpdaterPublicKeyBase58Check: senderPublicKeyBase58Check,
+			BodyObj: {
+				Body: postBody,
+				ImageURLs: [],
+				VideoURLs: [],
+			}
+		};
+		console.log(params);
+		const txInfo = await submitPost(params);		
+		console.log(txInfo);
+	}
+
 	const sendLikeHandler = async () =>{
 
 		// get param values
@@ -56,7 +75,7 @@
 		let readerPublicKeyBase58Check = publicKey;
 
 
-		sendLike(readerPublicKeyBase58Check, testPost)
+		sendLike(readerPublicKeyBase58Check, testPost, false)
 
 	}
 
@@ -96,13 +115,14 @@
 		return result;
 	}
 
-	const sendLike=async(readerPublicKeyBase58Check, postHashHex)=>{
+	const sendLike=async(readerPublicKeyBase58Check, postHashHex, unlikeIfLiked)=>{
 
 		let liked = await userHasLiked(readerPublicKeyBase58Check, postHashHex);
 		let isUnlike=false;
 		if(liked){
-			console.log('You have liked this post, unliking it now..');
-			isUnlike = true
+			if(unlikeIfLiked){
+				isUnlike = true
+			}
 		};
 
 		const likeParams = {
@@ -255,16 +275,6 @@
 		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
 		<button type="submit"  id="send-diamond">Diamond</button>
 	</form>	
-	<form id="reply-form" on:submit|preventDefault={sendReplyHandler}>
-		<h2>Send reply</h2>
-		<label>postHashHex</label>
-		<input type="text" name="postHashHex"  bind:value="{testPost}"/>
-		<label>publicKey</label>
-		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
-		<label>message</label>
-		<input type="text" name="message" bind:value="{reply}"/>		
-		<button  type="submit"  id="send-reply">Reply</button>
-	</form>
 	</section>
 	<section>
 	<form id="get-likes-form" on:submit|preventDefault={getLikesHandler}>
@@ -301,6 +311,28 @@
 		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
 		<button  type="submit"  id="get-blogs">Get Blogs</button>
 	</form>
+	</section>
+	<section>
+		<form id="reply-form" on:submit|preventDefault={sendPostHandler}>
+			<h2>Send Post</h2>
+			<label>postHashHex</label>
+			<input type="text" name="postHashHex"  bind:value="{testPost}"/>
+			<label>publicKey</label>
+			<input type="text" name="publicKey"  bind:value="{publicKey}"/>
+			<label>message</label>
+			<input type="text" name="message" bind:value="{testPostBody}"/>		
+			<button  type="submit"  id="send-post">Reply</button>
+		</form>		
+		<form id="reply-form" on:submit|preventDefault={sendReplyHandler}>
+			<h2>Send reply</h2>
+			<label>Reply To PostHashHex</label>
+			<input type="text" name="postHashHex"  bind:value="{testPost}"/>
+			<label>publicKey</label>
+			<input type="text" name="publicKey"  bind:value="{publicKey}"/>
+			<label>message</label>
+			<input type="text" name="message" bind:value="{reply}"/>		
+			<button  type="submit"  id="send-reply">Reply</button>
+		</form>
 	</section>
 </main>
 
