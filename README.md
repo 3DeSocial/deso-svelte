@@ -1,10 +1,4 @@
-## Introduction
-
-This is a Svelte JS project for testing login and transactions for the deso SDK of deso-js 
-
-[DeSo JS SDK](https://github.com/deso-protocol/deso-js) 
-
-## Functions in App.svelte So Far
+## Functions in App.svelte
 
 ### `configure`
 This function is used to set the spending limit options and transaction count limit map for various operations like basic transfer, submit post, like, and follow.
@@ -56,9 +50,10 @@ This function is used to send a like to a post.
 **Parameters:**
 - Reader's public key
 - Post hash
+- Boolean flag to unlike if already liked
 
 ```javascript
-sendLike(readerPublicKeyBase58Check, postHashHex);
+sendLike(readerPublicKeyBase58Check, postHashHex, unlikeIfLiked);
 ```
 
 ### `getLikes`
@@ -82,3 +77,15 @@ This function is used to send a diamond to a post.
 sendDiamond(readerPublicKeyBase58Check, postHashHex);
 ```
 
+### `sendPost`
+This function is used to send a post.
+
+**Parameters:**
+- Sender's public key
+- Post body
+
+```javascript
+sendPost(senderPublicKeyBase58Check, postBody);
+```
+
+The functions `getLikesHandler`, `getDiamondsForPostHandler`, and `sendReplyHandler` are currently empty and do not perform any operations.
