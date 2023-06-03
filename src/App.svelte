@@ -98,14 +98,39 @@
 
 	}
 
-	const getDiamondsForPostHandler = () =>{
+	const getDiamondsForPostHandler = async () =>{
+		let myPublicKey = publicKey;
+		let postHashHex = testPost;
+		let dimondStaus = await userHasDiamonded(myPublicKey, postHashHex);
+		if(dimondStaus){
+			console.log('You have sent diamonds to this post');
+			console.log(dimondStaus);
+			responseMessage = 'Your key '+myPublicKey+' has NOT sent diamonds to this post '+postHashHex;
 
-		responseMessage = 'Your key '+myPublicKey+' has diamonded post '+postHashHex;
-
+		} else {
+			console.log('You have not sent diamonds to this post');
+			console.log(dimondStaus);
+		responseMessage = 'Your key '+myPublicKey+' has disent diamonds to this post '+postHashHex;
+		}
 	}
 
-	const sendReplyHandler = () =>{
+	const sendReplyHandler = async () =>{
+		let myPublicKey = publicKey;
+		let postHashHex = testPost;
+		let postBody = testPostBody;
 
+		const params = {
+			ParentPostHashHex: testPost,
+			UpdaterPublicKeyBase58Check: myPublicKey,
+			BodyObj: {
+				Body: postBody,
+				ImageURLs: [],
+				VideoURLs: [],
+			}
+		};
+		console.log(params);
+		const txInfo = await submitPost(params);		
+		console.log(txInfo);
 	}
 	const userHasLiked = async (myPublicKey, passedPostHash) =>{
 
@@ -313,7 +338,7 @@
 	</form>
 	</section>
 	<section>
-		<form id="reply-form" on:submit|preventDefault={sendPostHandler}>
+		<form id="post-form" on:submit|preventDefault={sendPostHandler}>
 			<h2>Send Post</h2>
 			<label>postHashHex</label>
 			<input type="text" name="postHashHex"  bind:value="{testPost}"/>
@@ -330,7 +355,7 @@
 			<label>publicKey</label>
 			<input type="text" name="publicKey"  bind:value="{publicKey}"/>
 			<label>message</label>
-			<input type="text" name="message" bind:value="{reply}"/>		
+			<input type="text" name="message" bind:value="{testPostBody}"/>		
 			<button  type="submit"  id="send-reply">Reply</button>
 		</form>
 	</section>
