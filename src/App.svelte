@@ -120,7 +120,7 @@
 		let postBody = testPostBody;
 
 		const params = {
-			ParentPostHashHex: testPost,
+			ParentStakeID: postHashHex,
 			UpdaterPublicKeyBase58Check: myPublicKey,
 			BodyObj: {
 				Body: postBody,
@@ -346,7 +346,7 @@
 			<input type="text" name="publicKey"  bind:value="{publicKey}"/>
 			<label>message</label>
 			<input type="text" name="message" bind:value="{testPostBody}"/>		
-			<button  type="submit"  id="send-post">Reply</button>
+			<button  type="submit"  id="send-post">Post</button>
 		</form>		
 		<form id="reply-form" on:submit|preventDefault={sendReplyHandler}>
 			<h2>Send reply</h2>
