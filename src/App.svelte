@@ -1,12 +1,13 @@
 <script>
 
-	import {identity,  configure, updateLikeStatus, getLikesForPost, getDiamondsForPost, getSinglePost, sendDiamonds, submitPost} from 'deso-protocol';
+	import {identity,  configure, updateLikeStatus, getLikesForPost, getDiamondsForPost, getSinglePost,getSingleProfile,  sendDiamonds, submitPost} from 'deso-protocol';
 	import { onMount } from 'svelte';	
 	import { writable } from 'svelte/store';
 
 	let userStore = writable(null);
 	let loggedIn = false;
 	let publicKey =null;
+	let username = null;
 	let testPost = 'aaebf5cdc74423356f53ce865ed88b0ee41bba8c9d496e86b9e32c3135fa140a';
 	let reply = '';
 	let responseMessage = null;
@@ -27,24 +28,21 @@
 			}
 		})		
 		identity.subscribe((state) => {
-		const event = state.event;
-		switch(event){
-			case 'LOGOUT_END':
-				userStore.set({});
-				loggedIn = false;
+			const event = state.event;		
+			switch(event){
+				case 'LOGOUT_END':
+					userStore.set({});
+					loggedIn = false;
 
-			break;
-			case 'LOGIN_END':
-				if(state.currentUser){
-					let currentUser = state.currentUser;
-					userStore.set(currentUser);
-					loggedIn = true;
-					publicKey =currentUser.publicKey;
-
-				
-				}				
-			break;			
-
+				break;
+				case 'LOGIN_END':
+					if(state.currentUser){
+						let currentUser = state.currentUser;
+						userStore.set(currentUser);
+						loggedIn = true;
+						publicKey =currentUser.publicKey;
+					}				
+				break;
 		}
 
 		});
@@ -96,6 +94,42 @@
 
 	const getLikesHandler = async () =>{
 
+	}
+
+	const getBlogsHandler = async () =>{
+		let myUserName = username;
+	
+		return new Promise((resolve, reject) => {
+			// Get single profile
+			getSingleProfile({username:myUserName}).then(res => {
+				let profile = (res.Profile)?res.Profile:null;
+
+				// Check if ExtraData exists
+				if (profile.ExtraData) {
+					const extraData = profile.ExtraData;
+					// Check if BlogSlugMap exists
+					if (extraData.BlogSlugMap) {
+					// Parse the BlogSlugMap JSON string
+					const blogSlugMap = JSON.parse(extraData.BlogSlugMap);
+
+					// Create an associative array of blog post slugs indexed by the blog's post hash hex
+					const blogPosts = {};
+					for (const [slug, postHashHex] of Object.entries(blogSlugMap)) {
+						blogPosts[postHashHex] = slug;
+					}
+					console.log(blogPosts);
+					// Resolve the promise with the blogPosts array
+					resolve(blogPosts);
+				} else {
+					// If no BlogSlugMap exists, resolve the promise with an empty array
+					resolve({});
+				}
+			}
+			}).catch(error => {
+				// If an error occurs, reject the promise
+				reject(error);
+			});
+		});
 	}
 
 	const getDiamondsForPostHandler = async () =>{
@@ -328,10 +362,10 @@
 		<input type="text" name="postHashHex"  bind:value="{testPost}"/>
 		<button  type="submit"  id="get-likes">Get Likes</button>
 	</form>		
-	<form id="get-blogs" on:submit|preventDefault={sendReplyHandler}>
+	<form id="get-blogs" on:submit|preventDefault={getBlogsHandler}>
 		<h2>Get Blog Posts For User</h2>
-		<label>userPk</label>
-		<input type="text" name="postHashHex"  bind:value="{testPost}"/>
+		<label>Usename</label>
+		<input type="text" name="username"  bind:value="{username}"/>
 		<label>publicKey</label>
 		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
 		<button  type="submit"  id="get-blogs">Get Blogs</button>
