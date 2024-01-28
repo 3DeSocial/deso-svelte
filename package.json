@@ -19,7 +19,7 @@
     "svelte": "^3.55.0"
   },
   "dependencies": {
-    "deso-protocol": "^2.1.2",
+    "deso-protocol": "^2.6.4",
     "sirv-cli": "^2.0.0"
   }
 }

@@ -4,6 +4,11 @@
 	import { onMount } from 'svelte';	
 	import { writable } from 'svelte/store';
 
+	let derivedPublicKey = null;
+	let derivedSeedHex = null;
+	let accessSignature = null;
+	let expirationBlock = null;
+	let transactionSpendingLimitHex = null;
 	let userStore = writable(null);
 	let loggedIn = false;
 	let publicKey =null;
@@ -28,7 +33,8 @@
 			}
 		})		
 		identity.subscribe((state) => {
-			const event = state.event;		
+			const event = state.event;
+			console.log('event: ',event);
 			switch(event){
 				case 'LOGOUT_END':
 					userStore.set({});
@@ -38,15 +44,26 @@
 				case 'LOGIN_END':
 					if(state.currentUser){
 						let currentUser = state.currentUser;
+						console.dir(currentUser);
 						userStore.set(currentUser);
 						loggedIn = true;
 						publicKey =currentUser.publicKey;
+						let derivedKeyRes = currentUser.primaryDerivedKey;
+						accessSignature = derivedKeyRes.accessSignature;
+						derivedPublicKey = derivedKeyRes.derivedPublicKeyBase58Check;
+						derivedSeedHex = derivedKeyRes.derivedSeedHex;
+						transactionSpendingLimitHex = derivedKeyRes.transactionSpendingLimitHex;
+						expirationBlock = derivedKeyRes.expirationBlock;
 					}				
 				break;
 		}
 
 		});
 	});
+
+	const authKeyHandler = async () =>{
+
+	}
 
 	const sendPostHandler = async () =>{
 		// get param values
@@ -61,6 +78,7 @@
 				VideoURLs: [],
 			}
 		};
+		console.log('submitPostParams',params);
 		console.log(params);
 		const txInfo = await submitPost(params);		
 		console.log(txInfo);
@@ -144,7 +162,7 @@
 		} else {
 			console.log('You have not sent diamonds to this post');
 			console.log(dimondStaus);
-		responseMessage = 'Your key '+myPublicKey+' has disent diamonds to this post '+postHashHex;
+		responseMessage = 'Your key '+myPublicKey+' has sent diamonds to this post '+postHashHex;
 		}
 	}
 
@@ -318,6 +336,24 @@
 		</section>
 	{/if}	
 	<section>
+	<form id="auth-key-form" on:submit|preventDefault={authKeyHandler}>
+		<h2>Derived Key</h2>
+		<label>publicKey</label>
+		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
+		<label>accessSignature</label>
+		<input type="text" name="accessSignature"  bind:value="{accessSignature}"/>
+		<label>derivedPublicKey</label>
+		<input type="text" name="derivedPublicKey"  bind:value="{derivedPublicKey}"/>
+		<label>derivedSeedHex</label>
+		<input type="text" name="derivedSeedHex"  bind:value="{derivedSeedHex}"/>
+		<label>publicKey</label>		
+		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
+		<label>expirationBlock</label>
+		<input type="text" name="expirationBlock"  bind:value="{expirationBlock}"/>
+		<label>transactionSpendingLimitHex</label>
+		<input type="text" name="transactionSpendingLimitHex"  bind:value="{transactionSpendingLimitHex}"/>	
+		<button type="submit" id="auth-key">Authorize</button>
+	</form>		
 	<form id="like-form" on:submit|preventDefault={sendLikeHandler}>
 		<h2>Send Like</h2>
 		<label>postHashHex</label>
@@ -366,9 +402,7 @@
 		<h2>Get Blog Posts For User</h2>
 		<label>Usename</label>
 		<input type="text" name="username"  bind:value="{username}"/>
-		<label>publicKey</label>
-		<input type="text" name="publicKey"  bind:value="{publicKey}"/>
-		<button  type="submit"  id="get-blogs">Get Blogs</button>
+		<button  type="submit" id="get-blogs">Get Blogs</button>
 	</form>
 	</section>
 	<section>
