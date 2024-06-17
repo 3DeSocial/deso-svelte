@@ -25,16 +25,37 @@
 				// Map of transaction type to the number of times this derived key is
 				// allowed to perform this operation on behalf of the owner public key
 				TransactionCountLimitMap: {
-				BASIC_TRANSFER: 100, // 2 basic transfer transactions are authorized
-				SUBMIT_POST: 10,
-				LIKE: 100,
-				FOLLOW: 100
+					BASIC_TRANSFER: 'UNLIMITED', // 100000 basic transfer transactions are authorized
+					SUBMIT_POST: 'UNLIMITED',
+					LIKE: 'UNLIMITED',
+					FOLLOW: 'UNLIMITED',
+					CREATE_NFT: 'UNLIMITED',
+					ACCEPT_NFT_BID: 'UNLIMITED',
+					NFT_TRANSFER: 'UNLIMITED',
+					NFT_BID: 'UNLIMITED'
+				},
+				CreatorCoinOperationLimitMap: {
+					BC1YLh3GazkEWDVqMtCGv6gbU79HcMb1LKAgbYKiMzUoGDEsnnBSiw7: { 
+						transfer: 10
+					}
+  				},
+				NFTOperationLimitMap: { // Map with keys representing NFT post hash hexes
+					'': {
+						0: {
+							any: 'UNLIMITED',
+							accept_nft_bid: 'UNLIMITED',
+							nft_transfer: 'UNLIMITED',
+							nft_bid: 'UNLIMITED'
+						}
+					}
 				}
 			}
 		})		
 		identity.subscribe((state) => {
 			const event = state.event;
 			console.log('event: ',event);
+			console.log('state: ',state);
+
 			switch(event){
 				case 'LOGOUT_END':
 					userStore.set({});
@@ -62,8 +83,30 @@
 	});
 
 	const authKeyHandler = async () =>{
+    // Step 1. Construct an authorize transaction by sending a request to `/api/v0/authorize-derived-key`
+    let payload =  {
+        OwnerPublicKeyBase58Check: publicKey,
+        DerivedPublicKeyBase58Check: derivedPublicKey,
+        ExpirationBlock: expirationBlock,
+        AccessSignature: accessSignature,
+        DeleteKey: false,
+        DerivedKeySignature: true,
+        MinFeeRateNanosPerKB: 2000
+    }
+    let res = await axios.post(api + apiAuthorize, payload);
+    const transactionHex = res.data.TransactionHex;
 
-	}
+    // Step 2. Sign transaction with derived seed hex
+    const signedTransaction = signTransaction(derivedSeedHex, transactionHex);
+
+    // Step 3. Submit the transaction
+    payload = {
+        TransactionHex : signedTransaction
+    }
+    res = await axios.post(api + apiSubmit, payload)
+    console.log(res);
+}
+	
 
 	const sendPostHandler = async () =>{
 		// get param values
@@ -73,6 +116,7 @@
 		const params = {
 			UpdaterPublicKeyBase58Check: senderPublicKeyBase58Check,
 			BodyObj: {
+				IsHiddden: true,
 				Body: postBody,
 				ImageURLs: [],
 				VideoURLs: [],
